@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Web Timer</title>
+</head>
+<body>
+  <h1>Set Timer</h1>
+  
+  <form id="timer-form">
+    <label for="device-id">Device ID:</label>
+    <input type="text" id="device-id" required><br><br>
+
+    <label for="time">Seconds:</label>
+    <input type="number" id="time" min="1" required><br><br>
+
+    <button type="submit">Start Timer</button>
+  </form>
+
+  <p id="response"></p>
+<p id="confirmation"></p>
+
+<script>
+  document.getElementById('timer-form').addEventListener('submit', async function(event) {
+    event.preventDefault();
+
+    const deviceId = document.getElementById('device-id').value.trim();
+    const seconds = parseInt(document.getElementById('time').value);
+
+    const responseParagraph = document.getElementById('response');
+    const confirmationParagraph = document.getElementById('confirmation');
+
+    try {
+      const res = await fetch('https://flask-timer-api.onrender.com/set_timer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          device_id: deviceId,
+          seconds: seconds
+        })
+      });
+
+      const result = await res.json();
+      responseParagraph.textContent = JSON.stringify(result);
+
+      // to display how much time was sent
+      confirmationParagraph.textContent = `Timer set for ${seconds} seconds for device "${deviceId}"`;
+
+    } catch (err) {
+      console.error(err);
+      responseParagraph.textContent = 'Error: Could not reach server.';
+      confirmationParagraph.textContent = '';
+    }
+  });
+</script>
+</body>
+</html>
