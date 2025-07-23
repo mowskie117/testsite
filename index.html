@@ -1,58 +1,52 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Web Timer</title>
+  <title>ESP32 Timer Setter</title>
 </head>
 <body>
-  <h1>Set Timer</h1>
-  
-  <form id="timer-form">
-    <label for="device-id">Device ID:</label>
-    <input type="text" id="device-id" required><br><br>
+  <h1>Set ESP32 Target Time</h1>
 
-    <label for="time">Seconds:</label>
-    <input type="number" id="time" min="1" required><br><br>
+  <label for="device_id">Device ID:</label>
+  <input type="text" id="device_id" value="esp32_1"><br><br>
 
-    <button type="submit">Start Timer</button>
-  </form>
+  <label for="target_time">Target Time (UTC):</label>
+  <input type="datetime-local" id="target_time"><br><br>
+
+  <button onclick="sendTimer()">Send Timer</button>
 
   <p id="response"></p>
-<p id="confirmation"></p>
 
-<script>
-  document.getElementById('timer-form').addEventListener('submit', async function(event) {
-    event.preventDefault();
+  <script>
+    async function sendTimer() {
+      const deviceId = document.getElementById("device_id").value;
+      const timeInput = document.getElementById("target_time").value;
 
-    const deviceId = document.getElementById('device-id').value.trim();
-    const seconds = parseInt(document.getElementById('time').value);
+      if (!timeInput) {
+        alert("Please select a target time.");
+        return;
+      }
 
-    const responseParagraph = document.getElementById('response');
-    const confirmationParagraph = document.getElementById('confirmation');
+      // Convert to ISO 8601 with "Z" (UTC timezone)
+      const isoTime = new Date(timeInput).toISOString();
 
-    try {
-      const res = await fetch('https://flask-timer-api.onrender.com/set_timer', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          device_id: deviceId,
-          seconds: seconds
-        })
-      });
+      const body = {
+        device_id: deviceId,
+        target_time: isoTime
+      };
 
-      const result = await res.json();
-      responseParagraph.textContent = JSON.stringify(result);
+      try {
+        const response = await fetch("http://localhost:5000/set_timer", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
 
-      // to display how much time was sent
-      confirmationParagraph.textContent = `Timer set for ${seconds} seconds for device "${deviceId}"`;
-
-    } catch (err) {
-      console.error(err);
-      responseParagraph.textContent = 'Error: Could not reach server.';
-      confirmationParagraph.textContent = '';
+        const data = await response.json();
+        document.getElementById("response").innerText = JSON.stringify(data);
+      } catch (error) {
+        document.getElementById("response").innerText = "Error: " + error;
+      }
     }
-  });
-</script>
+  </script>
 </body>
 </html>
