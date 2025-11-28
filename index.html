@@ -1,54 +1,49 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
   <title>ESP32 Timer Setter</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 500px; margin: auto; }
+    label { display: block; margin-top: 10px; }
+    input { width: 100%; padding: 8px; margin-top: 4px; box-sizing: border-box; }
+    button { margin-top: 15px; padding: 10px 15px; }
+    #response { margin-top: 20px; white-space: pre-wrap; }
+  </style>
 </head>
 <body>
-  <h1>Set ESP32 Target Time</h1>
+  <h1>ESP32 Timer Setter</h1>
 
   <label for="device_id">Device ID:</label>
-  <input type="text" id="device_id" value="esp32_1"><br><br>
+  <input type="text" id="device_id" value="esp32_1">
 
   <label for="target_time">Target Time (UTC):</label>
-  <input type="datetime-local" id="target_time"><br><br>
+  <input type="datetime-local" id="target_time">
 
   <label for="event_name">Event Name:</label>
-  <input type="text" id="event_name" placeholder="Enter Event Name"><br><br>
+  <input type="text" id="event_name" placeholder="Enter Event Name">
 
-  <label for="pages">Pages:</label>
-  <input type="number" id="pages" min="0" placeholder="Optional"><br><br>
+  <label for="pages">Pages (optional):</label>
+  <input type="number" id="pages" placeholder="Optional">
 
-  <label for="duration">Duration (minutes):</label>
-  <input type="number" id="duration" min="0" placeholder="Optional"><br><br>
-
-  <label for="difficulty">Difficulty (1-5):</label>
-  <input type="number" id="difficulty" min="1" max="5" placeholder="Optional"><br><br>
+  <label for="duration">Duration (minutes, optional):</label>
+  <input type="number" id="duration" placeholder="Optional">
 
   <button onclick="sendTimer()">Send Timer</button>
-  <button onclick="predictMachine()">Machine Prediction</button><br><br>
+  <button onclick="predictMachine()">Predict Machine</button>
 
   <p id="response"></p>
 
   <script>
-    async function sendTimer() {
-      const body = gatherFormData();
-      await postData("/set_timer", body);
-    }
-
-    async function predictMachine() {
-      const body = gatherFormData();
-      await postData("/predict", body);
-    }
-
     function gatherFormData() {
       return {
         device_id: document.getElementById("device_id").value,
-        target_time: document.getElementById("target_time").value ? 
-          new Date(document.getElementById("target_time").value).toISOString() : null,
+        target_time: document.getElementById("target_time").value 
+          ? new Date(document.getElementById("target_time").value).toISOString() 
+          : null,
         event_name: document.getElementById("event_name").value,
         pages: parseInt(document.getElementById("pages").value) || null,
         duration: parseInt(document.getElementById("duration").value) || null,
-        difficulty: parseInt(document.getElementById("difficulty").value) || null
       };
     }
 
@@ -61,10 +56,18 @@
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
-        document.getElementById("response").innerText = JSON.stringify(data);
+        document.getElementById("response").innerText = JSON.stringify(data, null, 2);
       } catch (error) {
         document.getElementById("response").innerText = "Error: " + error;
       }
+    }
+
+    async function sendTimer() {
+      await postData("/set_timer", gatherFormData());
+    }
+
+    async function predictMachine() {
+      await postData("/predict", gatherFormData());
     }
   </script>
 </body>
