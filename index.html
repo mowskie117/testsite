@@ -249,6 +249,113 @@
       margin-top: 8px;
       font-weight: 600;
     }
+    
+    .queue-section {
+      margin-top: 30px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 12px;
+      display: none;
+    }
+    
+    .queue-section.show {
+      display: block;
+      animation: slideIn 0.3s ease;
+    }
+    
+    .queue-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .queue-header h3 {
+      margin: 0;
+      color: #333;
+      font-size: 1.2em;
+    }
+    
+    .refresh-btn {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85em;
+      transition: all 0.2s;
+    }
+    
+    .refresh-btn:hover {
+      background: #5568d3;
+      transform: scale(1.05);
+    }
+    
+    .queue-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .queue-item {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      border-left: 4px solid #667eea;
+      transition: all 0.2s;
+    }
+    
+    .queue-item:hover {
+      transform: translateX(5px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .queue-item.active {
+      border-left-color: #28a745;
+      background: #f0fff4;
+    }
+    
+    .queue-icon {
+      font-size: 2em;
+      flex-shrink: 0;
+    }
+    
+    .queue-content {
+      flex: 1;
+    }
+    
+    .queue-task-name {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 4px;
+    }
+    
+    .queue-meta {
+      font-size: 0.85em;
+      color: #666;
+    }
+    
+    .queue-duration {
+      font-weight: 600;
+      color: #667eea;
+      flex-shrink: 0;
+    }
+    
+    .queue-empty {
+      text-align: center;
+      padding: 30px;
+      color: #888;
+    }
+    
+    .queue-empty-icon {
+      font-size: 3em;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
@@ -313,10 +420,39 @@
     </form>
     
     <div id="response" class="response-box"></div>
+    
+    <div id="queueSection" class="queue-section">
+      <div class="queue-header">
+        <h3>📋 Timer Queue</h3>
+        <button class="refresh-btn" onclick="loadQueue()">🔄 Refresh</button>
+      </div>
+      <ul id="queueList" class="queue-list"></ul>
+    </div>
   </div>
 
   <script>
     const API_URL = 'https://api.mykairo.me';
+    
+    // Activity icons mapping
+    const activityIcons = {
+      'math_homework': '📐',
+      'biology_homework': '🧬',
+      'chemistry_homework': '⚗️',
+      'physics_homework': '⚛️',
+      'english_homework': '📚',
+      'history_homework': '📜',
+      'spanish_homework': '🗣️',
+      'french_homework': '🥖',
+      'computer_science': '💻',
+      'reading': '📖',
+      'writing': '✍️',
+      'studying': '📝',
+      'unknown': '📄'
+    };
+    
+    function getActivityIcon(canonical_name) {
+      return activityIcons[canonical_name] || '📄';
+    }
     
     // Update device name display when selection changes
     document.getElementById('device_id').addEventListener('change', (e) => {
@@ -457,6 +593,7 @@
         // Clear form after 2 seconds
         setTimeout(() => {
           document.getElementById('timerForm').reset();
+          loadQueue(); // Refresh queue display
         }, 2000);
         
       } catch (error) {
