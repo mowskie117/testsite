@@ -15,10 +15,22 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
       padding: 20px;
+    }
+    
+    .main-wrapper {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      align-items: start;
+    }
+    
+    @media (max-width: 1024px) {
+      .main-wrapper {
+        grid-template-columns: 1fr;
+      }
     }
     
     .container {
@@ -26,7 +38,6 @@
       border-radius: 20px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.3);
       padding: 40px;
-      max-width: 500px;
       width: 100%;
     }
     
@@ -250,44 +261,65 @@
       font-weight: 600;
     }
     
-    .queue-section {
-      margin-top: 30px;
-      padding: 20px;
-      background: #f8f9fa;
-      border-radius: 12px;
-    }
-    
-    .queue-section.empty {
-      display: none;
+    /* Queue Panel Styles */
+    .queue-panel {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      padding: 40px;
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+      position: sticky;
+      top: 20px;
     }
     
     .queue-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 15px;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #f0f0f0;
     }
     
-    .queue-header h3 {
+    .queue-header h2 {
       margin: 0;
-      color: #333;
-      font-size: 1.2em;
+      color: #667eea;
+      font-size: 1.8em;
+    }
+    
+    .queue-count {
+      background: #667eea;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.9em;
+      font-weight: 600;
     }
     
     .refresh-btn {
       background: #667eea;
       color: white;
       border: none;
-      padding: 8px 16px;
-      border-radius: 6px;
+      padding: 10px 20px;
+      border-radius: 8px;
       cursor: pointer;
-      font-size: 0.85em;
+      font-size: 0.9em;
+      font-weight: 600;
       transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     
     .refresh-btn:hover {
       background: #5568d3;
       transform: scale(1.05);
+    }
+    
+    .refresh-btn.loading {
+      opacity: 0.7;
+      cursor: wait;
     }
     
     .queue-list {
@@ -297,15 +329,15 @@
     }
     
     .queue-item {
-      background: white;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 10px;
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 15px;
       display: flex;
       align-items: center;
       gap: 15px;
       border-left: 4px solid #667eea;
-      transition: all 0.2s;
+      transition: all 0.3s;
     }
     
     .queue-item:hover {
@@ -315,11 +347,11 @@
     
     .queue-item.active {
       border-left-color: #28a745;
-      background: #f0fff4;
+      background: linear-gradient(135deg, #e8f5e9 0%, #f1f8f4 100%);
     }
     
     .queue-icon {
-      font-size: 2em;
+      font-size: 2.5em;
       flex-shrink: 0;
     }
     
@@ -328,103 +360,139 @@
     }
     
     .queue-task-name {
-      font-weight: 600;
+      font-weight: 700;
       color: #333;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
+      font-size: 1.1em;
     }
     
     .queue-meta {
-      font-size: 0.85em;
+      font-size: 0.9em;
       color: #666;
     }
     
     .queue-duration {
-      font-weight: 600;
+      font-weight: 700;
       color: #667eea;
       flex-shrink: 0;
+      font-size: 1.2em;
+    }
+    
+    .queue-item.active .queue-duration {
+      color: #28a745;
     }
     
     .queue-empty {
       text-align: center;
-      padding: 30px;
+      padding: 60px 20px;
       color: #888;
     }
     
     .queue-empty-icon {
-      font-size: 3em;
-      margin-bottom: 10px;
+      font-size: 4em;
+      margin-bottom: 15px;
+      opacity: 0.5;
+    }
+    
+    .queue-empty p {
+      font-size: 1.1em;
+    }
+    
+    .last-updated {
+      text-align: center;
+      font-size: 0.8em;
+      color: #999;
+      margin-top: 20px;
+      padding-top: 15px;
+      border-top: 1px solid #f0f0f0;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>⏱️ Kairo Timer</h1>
-    <p class="subtitle">ML-powered time prediction system</p>
-    
-    <div class="device-status">
-      <div class="status-dot"></div>
-      <span>ESP32 Connected: <strong id="device-name">esp32_1</strong></span>
+  <div class="main-wrapper">
+    <!-- Left Panel: Timer Control -->
+    <div class="container">
+      <h1>⏱️ Kairo Timer</h1>
+      <p class="subtitle">ML-powered time prediction system</p>
+      
+      <div class="device-status">
+        <div class="status-dot"></div>
+        <span>ESP32 Connected: <strong id="device-name">esp32_1</strong></span>
+      </div>
+      
+      <form id="timerForm">
+        <div class="form-group">
+          <label for="device_id">Device ID</label>
+          <select id="device_id">
+            <option value="esp32_1">ESP32 #1</option>
+            <option value="esp32_2">ESP32 #2</option>
+            <option value="esp32_alpha">ESP32 Alpha</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="event_name">What are you working on?</label>
+          <input 
+            type="text" 
+            id="event_name" 
+            placeholder="e.g., AP Bio homework, Math problems, Reading chapter 5"
+            required
+          >
+          <div class="input-hint">The AI will predict how long this will take</div>
+        </div>
+        
+        <div class="form-group">
+          <label for="pages">Pages (optional)</label>
+          <input 
+            type="number" 
+            id="pages" 
+            placeholder="Number of pages"
+            min="0"
+          >
+        </div>
+        
+        <div class="form-group">
+          <label for="duration">Estimated Duration (minutes, optional)</label>
+          <input 
+            type="number" 
+            id="duration" 
+            placeholder="Your guess in minutes"
+            min="1"
+          >
+        </div>
+        
+        <div class="button-group">
+          <button type="submit" class="btn-primary" id="submitBtn">
+            Start Timer
+          </button>
+          <button type="button" class="btn-secondary" onclick="clearForm()">
+            Clear
+          </button>
+        </div>
+      </form>
+      
+      <div id="response" class="response-box"></div>
     </div>
     
-    <form id="timerForm">
-      <div class="form-group">
-        <label for="device_id">Device ID</label>
-        <select id="device_id">
-          <option value="esp32_1">ESP32 #1</option>
-          <option value="esp32_2">ESP32 #2</option>
-          <option value="esp32_alpha">ESP32 Alpha</option>
-        </select>
-      </div>
-      
-      <div class="form-group">
-        <label for="event_name">What are you working on?</label>
-        <input 
-          type="text" 
-          id="event_name" 
-          placeholder="e.g., AP Bio homework, Math problems, Reading chapter 5"
-          required
-        >
-        <div class="input-hint">The AI will predict how long this will take</div>
-      </div>
-      
-      <div class="form-group">
-        <label for="pages">Pages (optional)</label>
-        <input 
-          type="number" 
-          id="pages" 
-          placeholder="Number of pages"
-          min="0"
-        >
-      </div>
-      
-      <div class="form-group">
-        <label for="duration">Estimated Duration (minutes, optional)</label>
-        <input 
-          type="number" 
-          id="duration" 
-          placeholder="Your guess in minutes"
-          min="1"
-        >
-      </div>
-      
-      <div class="button-group">
-        <button type="submit" class="btn-primary" id="submitBtn">
-          Start Timer
-        </button>
-        <button type="button" class="btn-secondary" onclick="clearForm()">
-          Clear
-        </button>
-      </div>
-    </form>
-    
-    <div id="response" class="response-box"></div>
-    
-    <div id="queueSection" class="queue-section">
+    <!-- Right Panel: Live Queue -->
+    <div class="queue-panel">
       <div class="queue-header">
-        <h3>📋 Timer Queue</h3>
-        <button class="refresh-btn" onclick="loadQueue()">🔄 Refresh</button>
+        <div>
+          <h2>📋 Timer Queue</h2>
+          <span id="queueCount" class="queue-count">0 waiting</span>
+        </div>
       </div>
+      
+      <button class="refresh-btn" onclick="loadQueue()" id="refreshBtn">
+        <span id="refreshIcon">🔄</span>
+        <span>Refresh</span>
+      </button>
+      
       <ul id="queueList" class="queue-list"></ul>
+      
+      <div class="last-updated" id="lastUpdated">
+        Last updated: Never
+      </div>
     </div>
   </div>
 
@@ -455,6 +523,7 @@
     // Update device name display when selection changes
     document.getElementById('device_id').addEventListener('change', (e) => {
       document.getElementById('device-name').textContent = e.target.value;
+      loadQueue(); // Reload queue for new device
     });
     
     // Handle form submission
@@ -588,7 +657,7 @@
           showResponse(message, 'success');
         }
         
-        // Clear form after 2 seconds
+        // Clear form and refresh queue after 2 seconds
         setTimeout(() => {
           document.getElementById('timerForm').reset();
           loadQueue(); // Refresh queue display
@@ -614,12 +683,114 @@
       document.getElementById('response').className = 'response-box';
     }
     
-    // Check server health on load
+    async function loadQueue() {
+      const deviceId = document.getElementById('device_id').value;
+      const queueList = document.getElementById('queueList');
+      const queueCount = document.getElementById('queueCount');
+      const refreshBtn = document.getElementById('refreshBtn');
+      const refreshIcon = document.getElementById('refreshIcon');
+      const lastUpdated = document.getElementById('lastUpdated');
+      
+      // Show loading state
+      refreshBtn.classList.add('loading');
+      refreshIcon.textContent = '⏳';
+      
+      try {
+        const response = await fetch(`${API_URL}/queue?device_id=${deviceId}`);
+        if (!response.ok) throw new Error('Failed to load queue');
+        
+        const data = await response.json();
+        
+        queueList.innerHTML = '';
+        
+        let itemCount = 0;
+        
+        // Show active timer
+        if (data.active) {
+          itemCount++;
+          const li = document.createElement('li');
+          li.className = 'queue-item active';
+          
+          const icon = getActivityIcon(data.active.canonical_event_name);
+          const duration = formatDuration(data.active.predicted_duration_sec);
+          const remaining = formatDuration(data.active.remaining_sec);
+          
+          li.innerHTML = `
+            <div class="queue-icon">${icon}</div>
+            <div class="queue-content">
+              <div class="queue-task-name">🟢 ${data.active.raw_event_name}</div>
+              <div class="queue-meta">${duration} total • ${remaining} remaining</div>
+            </div>
+            <div class="queue-duration">${remaining}</div>
+          `;
+          queueList.appendChild(li);
+        }
+        
+        // Show queued timers
+        if (data.queue && data.queue.length > 0) {
+          data.queue.forEach((item, index) => {
+            itemCount++;
+            const li = document.createElement('li');
+            li.className = 'queue-item';
+            
+            const icon = getActivityIcon(item.canonical_event_name);
+            const duration = formatDuration(item.predicted_duration_sec);
+            
+            li.innerHTML = `
+              <div class="queue-icon">${icon}</div>
+              <div class="queue-content">
+                <div class="queue-task-name">⏳ ${item.raw_event_name}</div>
+                <div class="queue-meta">Position #${index + 2} • ${item.canonical_event_name.replace(/_/g, ' ')}</div>
+              </div>
+              <div class="queue-duration">${duration}</div>
+            `;
+            queueList.appendChild(li);
+          });
+          
+          queueCount.textContent = `${data.queue.length} waiting`;
+        } else {
+          queueCount.textContent = data.active ? 'No queue' : '0 waiting';
+        }
+        
+        // Show empty state if no items
+        if (itemCount === 0) {
+          queueList.innerHTML = `
+            <div class="queue-empty">
+              <div class="queue-empty-icon">✨</div>
+              <p>No timers in queue</p>
+            </div>
+          `;
+        }
+        
+        // Update last updated time
+        const now = new Date();
+        lastUpdated.textContent = `Last updated: ${now.toLocaleTimeString()}`;
+        
+      } catch (error) {
+        console.error('Error loading queue:', error);
+        queueList.innerHTML = `
+          <div class="queue-empty">
+            <div class="queue-empty-icon">⚠️</div>
+            <p>Unable to load queue</p>
+          </div>
+        `;
+        queueCount.textContent = 'Error';
+      } finally {
+        refreshBtn.classList.remove('loading');
+        refreshIcon.textContent = '🔄';
+      }
+    }
+    
+    // Auto-refresh queue every 5 seconds
+    setInterval(loadQueue, 5000);
+    
+    // Check server health and load initial queue
     window.addEventListener('load', async () => {
       try {
         const response = await fetch(`${API_URL}/`);
         if (response.ok) {
           console.log('✅ API connection successful');
+          loadQueue(); // Load initial queue
         }
       } catch (error) {
         showResponse('⚠️ Warning: Cannot connect to API server. Please check your connection.', 'error');
