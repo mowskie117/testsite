@@ -152,6 +152,12 @@
       color: #721c24;
     }
     
+    .response-box.queued {
+      background: #fff3cd;
+      border: 2px solid #ffeaa7;
+      color: #856404;
+    }
+    
     .prediction-info {
       margin-top: 15px;
       padding: 15px;
@@ -163,6 +169,7 @@
     .prediction-info h3 {
       margin-bottom: 10px;
       color: #667eea;
+      font-size: 1.1em;
     }
     
     .prediction-item {
@@ -211,6 +218,36 @@
     @keyframes pulse {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.5; }
+    }
+    
+    .queue-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #667eea;
+      color: white;
+      font-size: 1.5em;
+      font-weight: bold;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      margin: 15px auto;
+    }
+    
+    .queue-position {
+      text-align: center;
+      font-size: 1.2em;
+      color: #856404;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    
+    .duration-display {
+      text-align: center;
+      font-size: 1.1em;
+      color: #667eea;
+      margin-top: 8px;
+      font-weight: 600;
     }
   </style>
 </head>
@@ -292,6 +329,15 @@
       await startTimer();
     });
     
+    function formatDuration(seconds) {
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+      }
+      return `${minutes} min`;
+    }
+    
     async function startTimer() {
       const submitBtn = document.getElementById('submitBtn');
       const responseBox = document.getElementById('response');
@@ -313,14 +359,8 @@
         return;
       }
       
-      // Calculate target time (now + estimated duration, or 30 min default)
-      const estimatedMinutes = duration ? parseInt(duration) : 30;
-      const targetTime = new Date(Date.now() + estimatedMinutes * 60 * 1000);
-      const targetTimeISO = targetTime.toISOString();
-      
       const payload = {
         device_id: deviceId,
-        target_time: targetTimeISO,
         event_name: eventName,
         pages: pages ? parseInt(pages) : null,
         duration: duration ? parseInt(duration) : null
@@ -342,40 +382,77 @@
         
         const data = await response.json();
         
-        // Show success message with prediction details
-        let message = `
-          <h3>✅ Timer Started Successfully!</h3>
-          <div class="prediction-info">
-            <h3>📊 Prediction Details</h3>
-            <div class="prediction-item">
-              <span>Task:</span>
-              <strong>${eventName}</strong>
+        // Handle different response types
+        if (data.status === 'queued') {
+          // QUEUED - Show queue position
+          let message = `
+            <h3>⏳ Added to Queue!</h3>
+            <div class="queue-badge">#${data.queue_position}</div>
+            <p class="queue-position">Position in Queue</p>
+            <div class="prediction-info">
+              <h3>📊 Task Details</h3>
+              <div class="prediction-item">
+                <span>Task:</span>
+                <strong>${eventName}</strong>
+              </div>
+              <div class="prediction-item">
+                <span>Predicted Activity:</span>
+                <strong>${data.canonical_event_name || 'Processing...'}</strong>
+              </div>
+              <div class="prediction-item">
+                <span>Predicted Duration:</span>
+                <strong>${formatDuration(data.predicted_duration_sec)}</strong>
+              </div>
+              ${pages ? `
+              <div class="prediction-item">
+                <span>Pages:</span>
+                <strong>${pages}</strong>
+              </div>
+              ` : ''}
             </div>
-            <div class="prediction-item">
-              <span>Predicted Activity:</span>
-              <strong>${data.canonical_event_name || 'Processing...'}</strong>
+            <p style="margin-top: 15px; font-size: 0.9em; color: #856404; text-align: center;">
+              Your timer will start automatically when the current one finishes!
+            </p>
+          `;
+          showResponse(message, 'queued');
+        } else if (data.status === 'started') {
+          // STARTED - Show timer details
+          const targetTime = new Date(data.target_time);
+          let message = `
+            <h3>✅ Timer Started!</h3>
+            <div class="duration-display">${formatDuration(data.predicted_duration_sec)}</div>
+            <div class="prediction-info">
+              <h3>📊 Prediction Details</h3>
+              <div class="prediction-item">
+                <span>Task:</span>
+                <strong>${eventName}</strong>
+              </div>
+              <div class="prediction-item">
+                <span>Predicted Activity:</span>
+                <strong>${data.canonical_event_name || 'Processing...'}</strong>
+              </div>
+              <div class="prediction-item">
+                <span>Will finish at:</span>
+                <strong>${targetTime.toLocaleTimeString()}</strong>
+              </div>
+              ${pages ? `
+              <div class="prediction-item">
+                <span>Pages:</span>
+                <strong>${pages}</strong>
+              </div>
+              ` : ''}
+              <div class="prediction-item">
+                <span>Session ID:</span>
+                <strong>#${data.pending_session_log_id}</strong>
+              </div>
             </div>
-            <div class="prediction-item">
-              <span>Target Time:</span>
-              <strong>${targetTime.toLocaleTimeString()}</strong>
-            </div>
-            ${pages ? `
-            <div class="prediction-item">
-              <span>Pages:</span>
-              <strong>${pages}</strong>
-            </div>
-            ` : ''}
-            <div class="prediction-item">
-              <span>Session ID:</span>
-              <strong>#${data.pending_session_log_id}</strong>
-            </div>
-          </div>
-          <p style="margin-top: 15px; font-size: 0.9em; color: #666;">
-            Your ESP32 will light up when time is up! Press the buttons to log feedback.
-          </p>
-        `;
-        
-        showResponse(message, 'success');
+            <p style="margin-top: 15px; font-size: 0.9em; color: #666; text-align: center;">
+              🌈 Your ESP32 will light up when time is up!<br>
+              Press the buttons to log feedback.
+            </p>
+          `;
+          showResponse(message, 'success');
+        }
         
         // Clear form after 2 seconds
         setTimeout(() => {
